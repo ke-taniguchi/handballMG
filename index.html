@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>マネージャー入力</title>
+<style>
+:root{--bg:#eef1f6;--card:#fff;--ink:#1b2433;--muted:#667085;--line:#dfe4ec;--accent:#3b5bdb;--accent-ink:#fff;--accent-soft:#e7ecff;--ok:#2b8a3e;--ok-soft:#e6f6ea;--warn:#a65d00;--warn-soft:#fff3dc;--danger:#c92a2a;--field:#f6f8fb}
+@media (prefers-color-scheme:dark){:root{--bg:#12161d;--card:#1b212b;--ink:#e8ecf3;--muted:#98a2b3;--line:#2a3340;--accent:#7c93ff;--accent-ink:#0f1530;--accent-soft:#232c52;--ok:#69db7c;--ok-soft:#1b3022;--warn:#ffc078;--warn-soft:#3a2d17;--danger:#ff8787;--field:#141a22}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;line-height:1.6;-webkit-text-size-adjust:100%}
+.top{background:var(--accent);color:var(--accent-ink);padding:14px 16px}
+.top .in{max-width:720px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.top h1{margin:0;font-size:18px;letter-spacing:.02em}
+.top small{opacity:.85;font-size:12px;display:block;line-height:1.3}
+.who{display:flex;align-items:center;gap:10px;font-size:13px}
+.who button{border:1px solid rgba(255,255,255,.55);background:transparent;color:inherit;font:inherit;font-size:12px;padding:5px 12px;border-radius:999px;cursor:pointer}
+.wrap{max-width:720px;margin:0 auto;padding:16px 16px 64px}
+.demo{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:8px 12px;font-size:12px;margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+.card h2{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:8px}
+.num{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:12px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+input,select{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);appearance:auto}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+select:disabled{opacity:.5}
+.row{display:grid;gap:10px}
+.r2{grid-template-columns:1fr 1fr}
+.r3{grid-template-columns:repeat(3,1fr)}
+.sel{display:flex;gap:8px;align-items:stretch}
+.sel select{flex:1}
+.ghost{border:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:13px;padding:0 12px;border-radius:10px;cursor:pointer;white-space:nowrap}
+.primary{width:100%;margin-top:14px;border:0;background:var(--accent);color:var(--accent-ink);font:inherit;font-weight:700;font-size:16px;padding:13px;border-radius:12px;cursor:pointer}
+.primary:disabled{opacity:.5}
+.err{color:var(--danger);font-size:13px;margin-top:8px;min-height:1.2em}
+.note{font-size:13px;color:var(--muted);margin-top:8px}
+.hint{margin-top:10px;padding:9px 12px;border-radius:10px;background:var(--accent-soft);font-size:13px}
+.hint b{font-size:16px}
+.hint.warn{background:var(--warn-soft);color:var(--warn)}
+.hint.ok{background:var(--ok-soft);color:var(--ok)}
+.target{display:flex;align-items:center;gap:8px;font-size:14px;margin-bottom:12px;padding:8px 12px;background:var(--accent-soft);border-radius:10px}
+.target b{font-size:16px}
+.day{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 4px;font-weight:700;font-size:14px}
+.day small{font-weight:400;color:var(--muted)}
+.rec{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.rec .nm{flex:1;min-width:0}
+.rec .nm small{display:block;color:var(--muted);font-size:12px}
+.rec .v{font-weight:700;white-space:nowrap}
+.del{border:0;background:transparent;color:var(--muted);font-size:20px;line-height:1;cursor:pointer;padding:4px 8px}
+.more{margin-top:10px;width:100%}
+.empty{color:var(--muted);text-align:center;padding:16px 0;font-size:14px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(30px);background:#1b2433;color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;max-width:92%;text-align:center;z-index:9}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (min-width:640px){.wrap{padding-top:24px}}
+</style>
+</head>
+<body>
+<div class="top"><div class="in">
+  <div><h1>マネージャー入力</h1><small>部員の記録を代わりに入力します</small></div>
+  <div class="who" id="who" hidden><span id="whoName"></span><button id="logout" type="button">ログアウト</button></div>
+</div></div>
+
+<div class="wrap">
+  <div id="demo" class="demo" hidden>テスト表示中：スプレッドシートに未接続のため、この端末の中だけで動いています。</div>
+
+  <!-- ログイン -->
+  <section class="card" id="loginCard">
+    <h2>マネージャーログイン</h2>
+    <div class="row">
+      <div><label for="mgName">名前</label><input id="mgName" type="text" autocomplete="username" maxlength="30" placeholder="MG"></div>
+      <div><label for="mgPin">パスワード（数字4けた）</label><input id="mgPin" type="password" inputmode="numeric" maxlength="4" autocomplete="current-password" placeholder="••••"></div>
+    </div>
+    <button id="loginBtn" class="primary" type="button">ログイン</button>
+    <div id="loginMsg" class="err" role="alert"></div>
+  </section>
+
+  <!-- 入力 -->
+  <div id="app" hidden>
+    <section class="card">
+      <h2><span class="num">1</span>記録する部員をえらぶ</h2>
+      <div class="sel">
+        <select id="student" aria-label="部員"></select>
+        <button id="reload" class="ghost" type="button">一覧を更新</button>
+      </div>
+      <div id="studentNote" class="note"></div>
+    </section>
+
+    <div id="entry" hidden>
+      <section class="card">
+        <div class="target">記録先：<b id="targetName"></b> さん</div>
+        <h2><span class="num">2</span>トレーニング日</h2>
+        <input id="date" type="date" aria-label="トレーニング日">
+        <div id="gap" class="hint"></div>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">3</span>種目と重量・回数・セット数</h2>
+        <div class="row r2">
+          <div><label for="part">部位</label><select id="part"></select></div>
+          <div><label for="ex">種目</label><select id="ex" disabled></select></div>
+        </div>
+        <div id="lastEx" class="note"></div>
+        <div class="row r3" style="margin-top:12px">
+          <div><label for="weight">重量</label><select id="weight"></select></div>
+          <div><label for="reps">回数</label><select id="reps"></select></div>
+          <div><label for="sets">セット数</label><select id="sets"></select></div>
+        </div>
+        <div class="note">重量は2.5kg刻みです。自重の種目は 0 をえらびます。</div>
+        <button id="save" class="primary" type="button">記録を保存</button>
+        <div class="note">保存後も部員・日付・種目はそのまま残るので、続けて入力できます。</div>
+      </section>
+
+      <section class="card">
+        <h2>この部員の記録</h2>
+        <div id="history"></div>
+      </section>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// 設定：部員用アプリ(index.html)と同じ「ウェブアプリのURL」を貼り付けます。
+// 空のままだと「テスト表示」になり、この端末の中だけで動きます。
+// ============================================================
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzRmk5W525J1TxRYCBab61QREiVAT8xIQmYTph8zX2Dmj5TRtV3-fLs4AIMSaFTbCOa/exec';
+
+// 種目リスト（部員用アプリと同じ）
+const EXERCISES = [["胸","ベンチプレス"],["胸","ダンベルフライ"],["胸","ダンベルベンチプレス"],["胸","インクラインベンチプレス"],["胸","デクラインベンチプレス"],["胸","プッシュアップ"],["胸","プッシュアップ（ワイドグリップ）"],["背中","デッドリフト"],["背中","懸垂（チンアップ）"],["背中","ベントオーバーロウ"],["背中","ラットプルダウン"],["背中","ダンベルローイング（片腕）"],["背中","プルオーバー"],["背中","バックエクステンション"],["背中","フェイスプル"],["背中","シュラッグ"],["肩","オーバーヘッドプレス（バーベル）"],["肩","ダンベルショルダープレス"],["肩","サイドレイズ"],["肩","フロントレイズ"],["肩","リアレイズ"],["肩","アーノルドプレス"],["肩","アップライトロウ"],["肩","バーベルハイプル"],["肩","パイクプッシュアップ"],["腕","バーベルカール"],["腕","ダンベルカール"],["腕","ハンマーカール"],["腕","インクラインカール"],["腕","コンセントレーションカール"],["腕","プレスダウン"],["腕","ライイングトライセプスエクステンション"],["腕","オーバーヘッドトライセプスエクステンション"],["腕","ナローグリッププッシュアップ"],["腕","リストカール"],["腕","リバースリストカール"],["脚","バーベルスクワット"],["脚","ランジ"],["脚","レッグカール"],["脚","レッグエクステンション"],["脚","ルーマニアンデッドリフト"],["脚","ゴブレットスクワット"],["脚","カーフレイズ"],["脚","ブルガリアンスプリットスクワット"],["脚","スティッフレッグドデッドリフト"],["脚","ステップアップ"],["腹筋・体幹","クランチ"],["腹筋・体幹","レッグレイズ"],["腹筋・体幹","プランク"],["腹筋・体幹","サイドプランク"],["腹筋・体幹","ロシアンツイスト"],["腹筋・体幹","アブホイール（アブスライダー）"],["腹筋・体幹","ハンギングレッグレイズ"],["腹筋・体幹","ドラゴンフラッグ"],["腹筋・体幹","バードドッグ"],["腹筋・体幹","デッドバグ"],["臀部","ヒップスラスト"],["臀部","グルートブリッジ"],["臀部","バーベルスクワット（ワイドスタンス）"],["臀部","ブルガリアンスプリットスクワット"],["臀部","ドンキーキック"],["臀部","サイドライングクラム"],["臀部","スモウデッドリフト"]];
+const PARTS = [...new Set(EXERCISES.map(e => e[0]))];
+
+// ---------- ユーティリティ ----------
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase();
+const fixPin = v => String(v||'').normalize('NFKC').replace(/\s/g,'');
+const pad = n => String(n).padStart(2,'0');
+const todayStr = () => { const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); };
+const dayNum = s => { const [y,m,d]=s.split('-').map(Number); return Date.UTC(y,m-1,d)/86400000; };
+const diffDays = (a,b) => Math.round(dayNum(b)-dayNum(a));
+const fmtDate = s => { const [y,m,d]=s.split('-').map(Number); return m+'/'+d+'（'+'日月火水木金土'[new Date(y,m-1,d).getDay()]+'）'; };
+const fmtNum = n => Number(n).toString();
+let toastTimer;
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2800); }
+
+// ---------- サーバーとの通信 ----------
+function friendly(msg){
+  if(msg==='unknown action') return 'サーバー側のスクリプト（Code.gs）が古いままです。新しい Code.gs を貼り付けて、「デプロイを管理」から新しいバージョンに更新してください';
+  if(String(msg).indexOf('この名前は登録されていません')===0) return '名前が違います（MG と入力してください）。それでも入れない場合は、サーバー側のスクリプト（Code.gs）が古いままの可能性があります';
+  if(msg==='マネージャー専用の操作です') return 'マネージャーのアカウントではありません';
+  return msg;
+}
+
+// テスト表示（GAS_URLが空）のとき：部員用アプリの端末内データ(wt_users / wt_records)を使う
+const lsUsers = () => { try { return JSON.parse(localStorage.getItem('wt_users')||'{}'); } catch(e){ return {}; } };
+const lsAll = () => { try { return JSON.parse(localStorage.getItem('wt_records')||'[]'); } catch(e){ return []; } };
+const lsSave = a => { try { localStorage.setItem('wt_records', JSON.stringify(a)); } catch(e){ throw new Error('この端末に保存できません'); } };
+function localCall(action, d){
+  if(norm(d.name)!=='mg' || d.pin!=='1234') throw new Error('名前またはパスワードが違います');
+  if(action==='mg_login') return {ok:true, name:'MG'};
+  const users = lsUsers();
+  if(action==='mg_users') return {ok:true, users:Object.values(users).map(u=>u.name)};
+  const t = users[norm(d.target)];
+  if(!t) throw new Error('その生徒は登録されていません');
+  if(action==='mg_list') return {ok:true, records: lsAll().filter(r=>norm(r.name)===norm(t.name))};
+  if(action==='mg_add'){
+    const all=lsAll(), rec={...d.record, name:t.name};
+    rec.id=Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+    all.push(rec); lsSave(all); return {ok:true, record:rec};
+  }
+  if(action==='mg_delete'){ lsSave(lsAll().filter(r=>!(r.id===d.id && norm(r.name)===norm(t.name)))); return {ok:true}; }
+  throw new Error('unknown action');
+}
+
+const state = { auth:null, students:[], student:'', records:[], showAll:false };
+const api = {
+  async call(action, data){
+    if(!GAS_URL) return localCall(action, data);
+    let j;
+    try{
+      const res = await fetch(GAS_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify({action, ...data})});
+      j = await res.json();
+    }catch(e){ throw new Error('サーバーにつながりませんでした。通信状況とGAS_URLを確認してください'); }
+    if(!j.ok) throw new Error(friendly(j.error||'エラーが起きました'));
+    return j;
+  },
+  login(name,pin){ return api.call('mg_login', {name,pin}); },
+  mg(action, data){ return api.call(action, {...state.auth, ...data}); }
+};
+
+// ---------- プルダウン ----------
+const UNIT = {weight:' kg', reps:' 回', sets:' セット'};
+const fill = (id, values, ph) => { $(id).innerHTML = '<option value="">'+ph+'</option>' + values.map(v=>'<option value="'+v+'">'+v+UNIT[id]+'</option>').join(''); };
+fill('weight', Array.from({length:81},(_,i)=>i*2.5), '重量');   // 0〜200kg、2.5kg刻み
+fill('reps',   Array.from({length:50},(_,i)=>i+1),   '回数');
+fill('sets',   Array.from({length:10},(_,i)=>i+1),   'セット');
+$('part').innerHTML = '<option value="">部位をえらぶ</option>' + PARTS.map(p=>'<option>'+esc(p)+'</option>').join('');
+$('ex').innerHTML = '<option value="">先に部位をえらぶ</option>';
+function setSel(id, val){
+  const s=$(id), v=String(val);
+  if(![...s.options].some(o=>o.value===v)){ const o=document.createElement('option'); o.value=v; o.textContent=v+UNIT[id]; s.appendChild(o); }
+  s.value=v;
+}
+
+// ---------- 描画 ----------
+const sortedRecords = () => state.records.slice().sort((a,b)=> a.date===b.date ? 0 : (a.date<b.date?-1:1));
+
+function renderStudents(){
+  const sel=$('student'), cur=state.student;
+  sel.innerHTML = '<option value="">部員をえらんでください（'+state.students.length+'人）</option>' +
+    state.students.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('');
+  sel.value = state.students.includes(cur) ? cur : '';
+  state.student = sel.value;
+  $('studentNote').textContent = state.students.length ? '' : 'まだ登録した部員がいません。部員用アプリで新規登録してもらってください。';
+}
+
+function renderGap(){
+  const el=$('gap'), d=$('date').value;
+  el.className='hint';
+  if(!state.student||!d){ el.textContent=''; return; }
+  if(!state.records.length){ el.className='hint ok'; el.textContent='この部員のはじめての記録です。'; return; }
+  const prev = state.records.map(r=>r.date).filter(x=>x<=d).sort().pop();
+  if(!prev){ el.textContent='この日より前の記録はありません。'; return; }
+  const n = diffDays(prev,d);
+  el.innerHTML = n===0 ? 'この日はすでに記録があります（続けて追加できます）'
+                       : '前回のトレーニング（'+fmtDate(prev)+'）から <b>'+n+'日</b> 空いています';
+}
+
+function renderLastEx(prefill){
+  const el=$('lastEx'), name=$('ex').value, d=$('date').value||todayStr();
+  if(!name){ el.textContent=''; return; }
+  const part=$('part').value;
+  const same = sortedRecords().filter(r=>r.exercise===name && r.date<=d);
+  let html='';
+  if(same.length){
+    const r=same[same.length-1], n=diffDays(r.date,d);
+    html='この種目の前回：<b>'+fmtDate(r.date)+'</b>（'+(n===0?'同じ日':n+'日前')+'）'+fmtNum(r.weight)+'kg × '+r.reps+'回 × '+r.sets+'セット';
+    if(prefill){ setSel('weight',r.weight); setSel('reps',r.reps); setSel('sets',r.sets); }
+  }else{
+    html='この種目の記録はまだありません。';
+    if(prefill){ $('weight').value=''; $('reps').value=''; $('sets').value=''; }
+  }
+  const lp = state.records.filter(r=>r.part===part && r.date<=d).map(r=>r.date).sort().pop();
+  if(lp && diffDays(lp,d)===1) html += '<br><span style="color:var(--warn)">⚠ 「'+esc(part)+'」は前回から1日しか空いていません。</span>';
+  el.innerHTML=html;
+}
+
+function renderHistory(){
+  const box=$('history');
+  if(!state.records.length){ box.innerHTML='<div class="empty">まだ記録がありません。</div>'; return; }
+  const dates=[...new Set(state.records.map(r=>r.date))].sort();
+  const LIMIT=6, list=dates.slice().reverse();
+  const shown = state.showAll ? list : list.slice(0,LIMIT);
+  let html='';
+  shown.forEach(d=>{
+    const i=dates.indexOf(d);
+    const gap = i>0 ? '前回から '+diffDays(dates[i-1],d)+'日あき' : 'はじめての記録';
+    html += '<div class="day"><span>'+fmtDate(d)+' <small>'+d.slice(0,4)+'</small></span><small>'+gap+'</small></div>';
+    html += sortedRecords().filter(r=>r.date===d).map(r=>
+      '<div class="rec"><div class="nm">'+esc(r.exercise)+'<small>'+esc(r.part)+'</small></div><div class="v">'+fmtNum(r.weight)+'kg × '+r.reps+'回 × '+r.sets+'</div><button class="del" type="button" data-del="'+esc(r.id)+'" aria-label="削除">×</button></div>'
+    ).join('');
+  });
+  if(list.length>LIMIT) html += '<button class="ghost more" type="button" id="more" style="padding:9px">'+(state.showAll?'直近だけ表示':'すべて表示（'+list.length+'日分）')+'</button>';
+  box.innerHTML=html;
+}
+
+function renderEntry(){
+  const on=!!state.student;
+  $('entry').hidden=!on;
+  if(!on) return;
+  $('targetName').textContent=state.student;
+  $('save').textContent=state.student+' さんの記録を保存';
+  renderGap(); renderLastEx(false); renderHistory();
+}
+
+// ---------- 動作 ----------
+async function loadStudents(){
+  try{ state.students = (await api.mg('mg_users',{})).users.slice().sort((a,b)=>a.localeCompare(b,'ja')); }
+  catch(e){ state.students=[]; toast('部員の一覧を読み込めませんでした：'+e.message); }
+  renderStudents(); renderEntry();
+  if(state.student) loadRecords();
+}
+
+async function loadRecords(){
+  const who=state.student;
+  if(!who){ state.records=[]; renderEntry(); return; }
+  try{
+    const recs=(await api.mg('mg_list',{target:who})).records;
+    if(who!==state.student) return;      // 読み込み中に別の部員へ切り替えた場合は捨てる
+    state.records=recs.map(r=>({...r, weight:Number(r.weight), reps:Number(r.reps), sets:Number(r.sets)}));
+  }catch(e){ state.records=[]; toast('記録を読み込めませんでした：'+e.message); }
+  renderEntry();
+}
+
+$('student').addEventListener('change', ()=>{
+  state.student=$('student').value; state.records=[]; state.showAll=false;
+  $('weight').value=''; $('reps').value=''; $('sets').value='';
+  renderEntry(); loadRecords();
+});
+$('reload').addEventListener('click', loadStudents);
+$('date').addEventListener('change', ()=>{ renderGap(); renderLastEx(false); });
+$('part').addEventListener('change', ()=>{
+  const p=$('part').value, ex=$('ex');
+  if(!p){ ex.innerHTML='<option value="">先に部位をえらぶ</option>'; ex.disabled=true; renderLastEx(false); return; }
+  ex.innerHTML='<option value="">種目をえらぶ</option>'+EXERCISES.filter(e=>e[0]===p).map(e=>'<option>'+esc(e[1])+'</option>').join('');
+  ex.disabled=false; renderLastEx(false);
+});
+$('ex').addEventListener('change', ()=>renderLastEx(true));
+
+$('save').addEventListener('click', async ()=>{
+  if(!state.student){ toast('先に部員をえらんでください'); return; }
+  const date=$('date').value, part=$('part').value, exercise=$('ex').value;
+  const w=$('weight').value, r=$('reps').value, s=$('sets').value;
+  if(!date){ toast('日付を入力してください'); return; }
+  if(!part||!exercise){ toast('部位と種目をえらんでください'); return; }
+  if(w===''){ toast('重量をえらんでください（自重は0）'); return; }
+  if(r===''){ toast('回数をえらんでください'); return; }
+  if(s===''){ toast('セット数をえらんでください'); return; }
+  const rec={date, part, exercise, weight:Number(w), reps:Number(r), sets:Number(s)};
+  const btn=$('save'), label=btn.textContent;
+  btn.disabled=true; btn.textContent='保存中…';
+  try{
+    const saved=(await api.mg('mg_add',{target:state.student, record:rec})).record;
+    state.records.push({...rec, id:saved.id, name:state.student});
+    toast('保存しました：'+state.student+'／'+exercise+' '+fmtNum(rec.weight)+'kg × '+rec.reps+'回 × '+rec.sets+'セット');
+    renderGap(); renderLastEx(false); renderHistory();
+  }catch(e){ toast('保存できませんでした：'+e.message); }
+  finally{ btn.disabled=false; btn.textContent=label; }
+});
+
+$('history').addEventListener('click', async e=>{
+  if(e.target.id==='more'){ state.showAll=!state.showAll; renderHistory(); return; }
+  const b=e.target.closest('[data-del]'); if(!b) return;
+  if(!confirm(state.student+' さんのこの記録を削除しますか？')) return;
+  try{
+    await api.mg('mg_delete',{target:state.student, id:b.dataset.del});
+    state.records=state.records.filter(r=>r.id!==b.dataset.del);
+    renderGap(); renderLastEx(false); renderHistory(); toast('削除しました');
+  }catch(err){ toast('削除できませんでした：'+err.message); }
+});
+
+// ---------- ログイン ----------
+const SS_KEY='wt_mg_auth';
+async function enter(name,pin){
+  state.auth={name,pin};
+  try{ sessionStorage.setItem(SS_KEY, JSON.stringify({name,pin})); }catch(e){}   // 閉じると消える（この画面を開いている間だけ）
+  $('loginCard').hidden=true; $('app').hidden=false; $('who').hidden=false;
+  $('whoName').textContent=name+' ログイン中';
+  $('mgPin').value='';
+  await loadStudents();
+}
+function logout(){
+  state.auth=null; state.students=[]; state.student=''; state.records=[];
+  try{ sessionStorage.removeItem(SS_KEY); }catch(e){}
+  $('loginCard').hidden=false; $('app').hidden=true; $('who').hidden=true; $('loginMsg').textContent='';
+  $('part').value=''; $('part').dispatchEvent(new Event('change'));
+  $('weight').value=''; $('reps').value=''; $('sets').value='';
+}
+async function doLogin(){
+  const name=$('mgName').value.trim(), pin=fixPin($('mgPin').value), msg=$('loginMsg');
+  msg.textContent='';
+  if(!name){ msg.textContent='名前を入力してください'; $('mgName').focus(); return; }
+  if(!/^\d{4}$/.test(pin)){ msg.textContent='パスワードは数字4けたで入力してください'; $('mgPin').focus(); return; }
+  const btn=$('loginBtn'), label=btn.textContent;
+  btn.disabled=true; btn.textContent='確認中…';
+  try{ const j=await api.login(name,pin); await enter(j.name||name,pin); }
+  catch(e){ msg.textContent=e.message; }
+  finally{ btn.disabled=false; btn.textContent=label; }
+}
+$('loginBtn').addEventListener('click', doLogin);
+$('logout').addEventListener('click', logout);
+['mgName','mgPin'].forEach(id=>$(id).addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); }));
+
+// ---------- 起動 ----------
+$('date').value=todayStr(); $('date').max=todayStr();
+$('demo').hidden=!!GAS_URL;
+(async function start(){
+  let saved=null;
+  try{ saved=JSON.parse(sessionStorage.getItem(SS_KEY)||'null'); }catch(e){}
+  if(saved&&saved.name&&saved.pin){
+    try{ const j=await api.login(saved.name,saved.pin); await enter(j.name||saved.name,saved.pin); }
+    catch(e){ try{ sessionStorage.removeItem(SS_KEY); }catch(e2){} }
+  }
+})();
+</script>
+</body>
+</html>
